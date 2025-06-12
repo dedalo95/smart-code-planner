@@ -1,12 +1,16 @@
 """LangGraph nodes for the coder assistant agent."""
 
 import asyncio
+import json
 from typing import Dict, Any, List
 from langgraph.graph import StateGraph
+from langchain.schema import SystemMessage, HumanMessage
 
 from ..core.models import AgentState, TaskAnalysisResult
 from ..services.task_analyzer import TaskAnalyzer
 from ..services.code_advisor import CodeAdvisor
+from ..services.llm_service import LLMService  
+from ..core.config import load_prompt
 
 
 class CoderAssistantNodes:
@@ -16,7 +20,64 @@ class CoderAssistantNodes:
         """Initialize the nodes."""
         self.task_analyzer = TaskAnalyzer()
         self.code_advisor = CodeAdvisor()
+        self.llm = LLMService.get_llm()
+        self.validation_prompt = load_prompt("task_validation")
     
+    async def validate_task_node(self, state: AgentState) -> Dict[str, Any]:
+        """Node to validate if the task is programming-related."""
+        try:
+            # Create the validation prompt
+            messages = [
+                SystemMessage(content=self.validation_prompt),
+                HumanMessage(content=f"Task to validate: {state.current_task}")
+            ]
+            
+            # Get response from LLM
+            response = await self.llm.ainvoke(messages)
+            
+            # Parse the validation response
+            validation_result = self._parse_validation_response(response.content)
+            
+            if not validation_result.get("is_programming_related", False):
+                # Task is not programming-related
+                return {
+                    "error_message": "This request doesn't appear to be related to programming or software development. Please ask about coding, software architecture, development tasks, or technical implementation questions.",
+                    "processing_complete": True,
+                }
+            
+            # Task is valid, continue with normal processing
+            return {
+                "error_message": None,
+                "processing_complete": False,
+            }
+            
+        except Exception as e:
+            # If validation fails, assume it's programming-related to avoid blocking valid requests
+            return {
+                "error_message": None,
+                "processing_complete": False,
+            }
+    
+    def _parse_validation_response(self, response_content: str) -> Dict[str, Any]:
+        """Parse the validation response from the LLM."""
+        try:
+            # Try to extract JSON from the response
+            start_marker = "```json"
+            end_marker = "```"
+            
+            if start_marker in response_content:
+                start = response_content.find(start_marker) + len(start_marker)
+                end = response_content.find(end_marker, start)
+                json_str = response_content[start:end].strip()
+            else:
+                # Try to find JSON directly
+                json_str = response_content.strip()
+            
+            return json.loads(json_str)
+        except (json.JSONDecodeError, ValueError):
+            # If parsing fails, default to assuming it's programming-related
+            return {"is_programming_related": True, "confidence": 0.5}
+
     async def decompose_task_node(self, state: AgentState) -> Dict[str, Any]:
         """Node to decompose the main task into subtasks."""
         try:
