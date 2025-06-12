@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  smart-code-planner:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    ports:
+      - "8501:8501"
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - LANGCHAIN_API_KEY=${LANGCHAIN_API_KEY}
+      - LANGCHAIN_TRACING_V2=${LANGCHAIN_TRACING_V2:-false}
+      - LANGCHAIN_PROJECT=${LANGCHAIN_PROJECT:-smart-code-planner}
+      - MODEL_NAME=${MODEL_NAME:-gpt-4o}
+      - TEMPERATURE=${TEMPERATURE:-0.3}
+      - MAX_TOKENS=${MAX_TOKENS:-2000}
+      - MAX_ANALYSIS_DEPTH=${MAX_ANALYSIS_DEPTH:-3}
+      - STREAMLIT_PORT=${STREAMLIT_PORT:-8501}
+      - STREAMLIT_HOST=${STREAMLIT_HOST:-0.0.0.0}
+    volumes:
+      - .:/app
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8501/_stcore/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+networks:
+  default:
+    name: smart-code-planner-network
