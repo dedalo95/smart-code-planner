@@ -42,12 +42,18 @@ poetry run streamlit run app.py
 ### **Method 4: Using Docker**
 
 ```bash
-# Option A: Docker Compose
+# Option A: Build and run manually
+docker build -t smart-code-planner .
+docker run -p 8501:8501 smart-code-planner
+
+# Option B: Docker Compose (if available)
 docker-compose up --build
 
-# Option B: Manual Docker
-docker build -f docker/Dockerfile -t smart-code-planner .
+# Option C: Run with environment variables
 docker run -p 8501:8501 --env-file .env smart-code-planner
+
+# Option D: Run in background
+docker run -d -p 8501:8501 --name smart-code-planner-app smart-code-planner
 ```
 
 ### **Method 5: Development Mode**

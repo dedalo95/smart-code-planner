@@ -76,6 +76,7 @@ smart-code-planner/
 ├── 📄 README.md              # Main documentation
 ├── 📄 QUICKSTART.md          # Getting started guide
 ├── 📄 pyproject.toml         # Poetry configuration
+├── 📄 Dockerfile             # Docker configuration
 ├── 📄 docker-compose.yml     # Docker setup
 ├── 📄 Makefile              # Development commands
 ├── 🗂️ src/                   # Source code
@@ -85,7 +86,6 @@ smart-code-planner/
 │   └── 🗂️ ui/               # Streamlit interface
 ├── 🗂️ prompts/              # LLM prompts
 ├── 🗂️ tests/                # Test suite
-├── 🗂️ docker/               # Docker configuration
 └── 🗂️ examples/             # Usage examples
 ```
 
@@ -107,6 +107,10 @@ echo "OPENAI_API_KEY=your_key_here" >> .env
 ### Docker Setup
 ```bash
 # Build and run with Docker
+docker build -t smart-code-planner .
+docker run -p 8501:8501 smart-code-planner
+
+# Or use Docker Compose if available
 docker-compose up --build
 ```
 

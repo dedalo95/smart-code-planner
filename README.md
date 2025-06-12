@@ -44,11 +44,10 @@ smart-code-planner/
 │   ├── subtask_analysis.txt
 │   └── code_organization.txt
 ├── tests/
-├── docker/
-│   └── Dockerfile
+├── Dockerfile              # Docker configuration
 ├── pyproject.toml
 ├── README.md
-└── docker-compose.yml
+└── docker-compose.yml      # Optional Docker Compose setup
 ```
 
 ## 🚀 Quick Start
@@ -75,13 +74,38 @@ smart-code-planner/
 
 ### Using Docker
 
-1. **Build and run**:
+1. **Build the Docker image**:
    ```bash
-   docker-compose up --build
+   docker build -t smart-code-planner .
    ```
 
-2. **Access the application**:
+2. **Run the container**:
+   ```bash
+   docker run -p 8501:8501 smart-code-planner
+   ```
+
+3. **Access the application**:
    Open http://localhost:8501 in your browser
+
+**Alternative with Docker Compose (if available)**:
+```bash
+docker-compose up --build
+```
+
+**Useful Docker commands**:
+```bash
+# Run in background
+docker run -d -p 8501:8501 --name smart-code-planner-app smart-code-planner
+
+# View logs
+docker logs smart-code-planner-app
+
+# Stop container
+docker stop smart-code-planner-app
+
+# Remove container
+docker rm smart-code-planner-app
+```
 
 ## 🔧 Configuration
 

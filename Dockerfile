@@ -14,24 +14,26 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y \
     build-essential \
     curl \
+    git \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Poetry
-RUN pip install poetry
+RUN pip install poetry==1.6.1
 
-# Configure Poetry
-ENV POETRY_NO_INTERACTION=1 \
-    POETRY_VENV_IN_PROJECT=1 \
-    POETRY_CACHE_DIR=/tmp/poetry_cache
+# Configure Poetry: disable virtualenv creation since we're in a container
+RUN poetry config virtualenvs.create false
 
-# Copy poetry files
+# Copy poetry files first for better layer caching
 COPY pyproject.toml poetry.lock* ./
 
-# Install dependencies
-RUN poetry install --only=main && rm -rf $POETRY_CACHE_DIR
+# Install dependencies directly to system Python
+RUN poetry install --no-root --no-dev || poetry install --no-root
 
 # Copy application code
 COPY . .
+
+# Install the current project if it's a package
+RUN poetry install --only-root || true
 
 # Create non-root user
 RUN adduser --disabled-password --gecos '' appuser && chown -R appuser:appuser /app
@@ -41,7 +43,8 @@ USER appuser
 EXPOSE 8501
 
 # Health check
-HEALTHCHECK CMD curl --fail http://localhost:8501/_stcore/health
+HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
+    CMD curl --fail http://localhost:8501/_stcore/health || exit 1
 
 # Run the application
 CMD ["poetry", "run", "streamlit", "run", "src/ui/streamlit_app.py", "--server.address", "0.0.0.0", "--server.port", "8501"]
